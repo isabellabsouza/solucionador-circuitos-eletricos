@@ -1,0 +1,109 @@
+#include <stdio.h>
+#include <math.h>
+
+void gaussSolver(int n, double A[n][n], double b[n], double X[n]) {
+    int i, j, k, l, m;
+  
+    //ESCALONAMENTO
+    for (k = 0; k < n - 1; k++) {
+        double max = fabs(A[k][k]);
+        int maxIndex = k;
+        
+        for (i = k + 1; i < n; i++) {
+            if (max < fabs(A[i][k])) {
+                max = fabs(A[i][k]);
+                maxIndex = i;
+            }
+        }
+        if (maxIndex != k) {
+            
+            for (j = 0; j < n; j++) {
+                double temp = A[k][j];
+                A[k][j] = A[maxIndex][j];
+                A[maxIndex][j] = temp;
+            }
+            double temp = b[k];
+            b[k] = b[maxIndex];
+            b[maxIndex] = temp;
+        }
+
+      
+        if (A[k][k] == 0) {
+            printf("A matriz dos coeficientes é singular\n");
+            return;
+        } else {
+            
+            for (m = k + 1; m < n; m++) {
+                double F = -A[m][k] / A[k][k];
+                A[m][k] = 0; //evita uma iteração
+                b[m] = b[m] + F * b[k];
+                for (l = k + 1; l < n; l++) {
+                    A[m][l] = A[m][l] + F * A[k][l];
+                }
+            }
+        }
+    }
+  
+    //RESOLUÇÃO DO SISTEMA Ax=b
+    for (i = n - 1; i >= 0; i--) {
+        X[i] = b[i];
+        for (j = i + 1; j < n; j++) {
+            X[i] = X[i] - X[j] * A[i][j];
+        }
+        X[i] = X[i] / A[i][i];
+    }
+}
+
+int main(void) {
+  
+  int i, j;
+  int qtd_malhas;
+
+  printf("***********************************************************\n");
+  printf("*SULOCIONADOR DE CORRENTES DE MALHA DE CIRCUITOS ELETRICOS*\n");
+  printf("***********************************************************\n\n");
+
+  printf("\nObs: assuma que as correntes circulam no sentido horario, e  informe as tensoes com o sinal de negativo quando necessario\n\n");
+
+  printf("Quantas malhas o circuito possui? ");
+  scanf("%d", &qtd_malhas);
+
+  double matriz[qtd_malhas][qtd_malhas], ddp[qtd_malhas], x[qtd_malhas];
+
+  //LEITURA RESISTENCIAS E TENSOES
+  for(i = 0; i < qtd_malhas; i++)
+    {
+      printf("\nANALISE MALHA %d\n", i+1);
+      
+      for(j = i; j < qtd_malhas; j++)
+        {
+          if(i==j)
+          {
+            printf("Qual a resistencia equivalente da malha %d?\n", i+1);
+            printf("  Valor em ohms: ");
+            scanf("%lf", &matriz[i][j]);
+          }
+          else
+          {
+            printf("Qual a resistencia compartilhada pelas malhas %d e %d?\n", i+1, j+1);
+            printf("  Valor em ohms: ");
+            scanf("%lf", &matriz[i][j]);
+            matriz[i][j] *= -1;
+            matriz[j][i]=matriz[i][j];
+          }
+        }
+
+      printf("Qual a tensao equivalente da malha %d?\n", i+1);
+      printf("  Valor em volts: ");
+      scanf("%lf", &ddp[i]);
+    }
+
+  
+  gaussSolver(qtd_malhas, matriz, ddp, x);
+
+  printf("\nRESULTADOS\n");
+  printf("I1 = %.5lf A\nI2 = %.5lf A\nI3 = %.5lf A\n", x[0], x[1], x[2]);
+  
+  
+  return 0;
+}
